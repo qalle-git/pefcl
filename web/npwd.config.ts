@@ -12,11 +12,12 @@ import BankIcon from './src/BankIcon';
 
 export const externalAppConfig = () => ({
   id: 'BANK',
-  nameLocale: 'BANK',
+  nameLocale: 'eBank',
   color: '#fff',
   backgroundColor: '#264f82',
   path: '/bank',
   icon: BankIcon,
+  notificationIcon: BankIcon,
   app: App,
 });
 

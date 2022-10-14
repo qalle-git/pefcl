@@ -1,14 +1,29 @@
 import styled from '@emotion/styled';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Account, AccountType } from '@typings/Account';
+import { getIsAdmin, getIsOwner } from '@utils/account';
 import { useConfig } from '../hooks/useConfig';
 import { MasterCardIcon } from '../icons/MasterCardIcon';
 import { formatMoney } from '../utils/currency';
 import theme from '../utils/theme';
 import { BodyText } from './ui/Typography/BodyText';
 import { Heading3, Heading5, Heading6 } from './ui/Typography/Headings';
-import { Skeleton } from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Skeleton,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { ContentCopyRounded, CreditCard } from '@mui/icons-material';
+import copy from 'copy-to-clipboard';
+import { fetchNui } from '../utils/fetchNui';
 
 const Container = styled.div<{ accountType: AccountType; selected: boolean }>`
   user-select: none;
@@ -75,12 +90,31 @@ const DefaultText = styled(Heading6)`
 type AccountCardProps = {
   account: Account;
   selected?: boolean;
+  mobileApp?: boolean;
 };
 
-export const AccountCard = ({ account, selected = false, ...props }: AccountCardProps) => {
+export const AccountCard = ({
+  account,
+  selected = false,
+  mobileApp = false,
+  ...props
+}: AccountCardProps) => {
   const { type, id, balance, isDefault, accountName, number } = account;
   const { t } = useTranslation();
   const config = useConfig();
+
+  const [confirmDialog, setConfirmDialogOpen] = useState<boolean>(false);
+
+  const handleCreateCreditCard = () => {
+    fetchNui('pefcl:createCreditCard', account)
+      .then(() => {})
+      .finally(() => setConfirmDialogOpen(false));
+  };
+
+  const isAdmin = Boolean(account && getIsAdmin(account));
+  const isOwner = Boolean(account && getIsOwner(account));
+
+  const hasPermission = isAdmin || isOwner;
 
   return (
     <Container {...props} key={id} accountType={type} selected={selected}>
@@ -93,6 +127,57 @@ export const AccountCard = ({ account, selected = false, ...props }: AccountCard
       </Row>
 
       <Heading5>{number}</Heading5>
+      <Dialog
+        open={confirmDialog}
+        onClose={() => setConfirmDialogOpen(false)}
+        fullWidth
+        hideBackdrop
+        maxWidth="xs"
+      >
+        <DialogTitle>
+          <span>{'Skapa kontantkort'}</span>
+        </DialogTitle>
+
+        <DialogContent>
+          <Typography>Vill du skapa ett kontantkort till detta konto?</Typography>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="error" onClick={() => setConfirmDialogOpen(false)}>
+            {t('Cancel')}
+          </Button>
+          <Button
+            onClick={() => {
+              handleCreateCreditCard();
+            }}
+          >
+            {'Skapa'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Stack direction="row" alignItems="center">
+        <Heading5>{number}</Heading5>
+        <IconButton
+          onClick={() => copy(number)}
+          size="small"
+          color="inherit"
+          style={{ opacity: '0.45', marginTop: 0, marginLeft: '0.25rem' }}
+        >
+          <ContentCopyRounded color="inherit" fontSize="small" />
+        </IconButton>
+        <Tooltip title="Skapa kreditkort">
+          <IconButton
+            onClick={() => setConfirmDialogOpen(true)}
+            size="small"
+            color="inherit"
+            style={{ opacity: '0.45', marginTop: 0, marginLeft: '0.25rem' }}
+            disabled={mobileApp || !hasPermission}
+          >
+            <CreditCard color="inherit" fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Stack>
 
       <RowEnd>
         <Col>

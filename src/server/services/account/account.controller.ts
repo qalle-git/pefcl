@@ -159,6 +159,17 @@ export class AccountController {
     }
   }
 
+  @NetPromise('pefcl:createCreditCard')
+  async createCreaditCard(req: Request<Account>, res: Response<any>) {
+    try {
+      emit('x-npwd:createCreditCard', req.source, req.data);
+
+      res({ status: 'ok', data: {} });
+    } catch (err) {
+      res({ status: 'error', errorMsg: err.message });
+    }
+  }
+
   @NetPromise(SharedAccountEvents.AddUser)
   async addSharedAccountUser(req: Request<AddToSharedAccountInput>, res: Response<any>) {
     try {

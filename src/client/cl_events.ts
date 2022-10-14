@@ -116,6 +116,8 @@ RegisterNuiProxy(AccountEvents.WithdrawMoney);
 RegisterNuiProxy(AccountEvents.DepositMoney);
 RegisterNuiProxy(CashEvents.GetMyCash);
 
+RegisterNuiProxy('pefcl:createCreditCard');
+
 RegisterCommand(
   'bank-force-load',
   async () => {
