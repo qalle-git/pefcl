@@ -15,17 +15,20 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  IconButton,
-  Skeleton,
-  Stack,
   Tooltip,
   Typography,
 } from '@mui/material';
 import { ContentCopyRounded, CreditCard } from '@mui/icons-material';
 import copy from 'copy-to-clipboard';
 import { fetchNui } from '../utils/fetchNui';
+import { IconButton, Skeleton, Stack } from '@mui/material';
 
-const Container = styled.div<{ accountType: AccountType; selected: boolean }>`
+interface ContainerProps {
+  isDisabled: boolean;
+  accountType: AccountType;
+  selected: boolean;
+}
+const Container = styled.div<ContainerProps>`
   user-select: none;
   width: 100%;
   padding: 1rem;
@@ -53,8 +56,14 @@ const Container = styled.div<{ accountType: AccountType; selected: boolean }>`
   ${({ selected }) =>
     selected &&
     `
-    border: 2px solid ${theme.palette.background.light8};
+    border: 2px solid ${theme.palette.primary.light};
   `};
+
+  ${({ isDisabled }) =>
+    isDisabled &&
+    `
+    opacity: 0.5;
+  `}
 `;
 
 const Row = styled.div`
@@ -90,13 +99,15 @@ const DefaultText = styled(Heading6)`
 type AccountCardProps = {
   account: Account;
   selected?: boolean;
-  mobileApp?: boolean;
+  withCopy?: boolean;
+  isDisabled?: boolean;
 };
 
 export const AccountCard = ({
   account,
   selected = false,
-  mobileApp = false,
+  withCopy = false,
+  isDisabled = false,
   ...props
 }: AccountCardProps) => {
   const { type, id, balance, isDefault, accountName, number } = account;
@@ -117,7 +128,7 @@ export const AccountCard = ({
   const hasPermission = isAdmin || isOwner;
 
   return (
-    <Container {...props} key={id} accountType={type} selected={selected}>
+    <Container {...props} key={id} accountType={type} selected={selected} isDisabled={isDisabled}>
       <Row>
         <Heading3>{formatMoney(balance, config.general)}</Heading3>
         <Type>
@@ -126,57 +137,18 @@ export const AccountCard = ({
         </Type>
       </Row>
 
-      <Heading5>{number}</Heading5>
-      <Dialog
-        open={confirmDialog}
-        onClose={() => setConfirmDialogOpen(false)}
-        fullWidth
-        hideBackdrop
-        maxWidth="xs"
-      >
-        <DialogTitle>
-          <span>{'Skapa kontantkort'}</span>
-        </DialogTitle>
-
-        <DialogContent>
-          <Typography>Vill du skapa ett kontantkort till detta konto?</Typography>
-        </DialogContent>
-
-        <DialogActions>
-          <Button color="error" onClick={() => setConfirmDialogOpen(false)}>
-            {t('Cancel')}
-          </Button>
-          <Button
-            onClick={() => {
-              handleCreateCreditCard();
-            }}
-          >
-            {'Skapa'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <Stack direction="row" alignItems="center">
         <Heading5>{number}</Heading5>
-        <IconButton
-          onClick={() => copy(number)}
-          size="small"
-          color="inherit"
-          style={{ opacity: '0.45', marginTop: 0, marginLeft: '0.25rem' }}
-        >
-          <ContentCopyRounded color="inherit" fontSize="small" />
-        </IconButton>
-        <Tooltip title="Skapa kreditkort">
+        {withCopy && (
           <IconButton
-            onClick={() => setConfirmDialogOpen(true)}
+            onClick={() => copy(number)}
             size="small"
             color="inherit"
             style={{ opacity: '0.45', marginTop: 0, marginLeft: '0.25rem' }}
-            disabled={mobileApp || !hasPermission}
           >
-            <CreditCard color="inherit" fontSize="small" />
+            <ContentCopyRounded color="inherit" fontSize="small" />
           </IconButton>
-        </Tooltip>
+        )}
       </Stack>
 
       <RowEnd>
@@ -184,8 +156,6 @@ export const AccountCard = ({
           <Heading6>{t('Account name')}</Heading6>
           <BodyText>{accountName}</BodyText>
         </Col>
-
-        <StyledIcon />
       </RowEnd>
     </Container>
   );
@@ -193,7 +163,7 @@ export const AccountCard = ({
 
 export const LoadingAccountCard = () => {
   return (
-    <Container accountType={AccountType.Personal} selected={false}>
+    <Container accountType={AccountType.Personal} selected={false} isDisabled={false}>
       <Row>
         <Heading3>
           <Skeleton variant="text" width={120} />

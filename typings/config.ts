@@ -33,18 +33,25 @@ export interface ResourceConfig {
   frameworkIntegration: {
     enabled: boolean;
     resource: string;
+    syncInitialBankBalance: boolean;
+    isCardsEnabled: boolean;
   };
   database: {
     profileQueries: boolean;
-    shouldSync: boolean;
+    shouldSync?: boolean;
   };
   prices: {
     newAccount: number;
   };
   accounts: {
-    startAmount: number;
+    firstAccountStartBalance: number;
+    otherAccountStartBalance: number;
     clearingNumber: string | number;
     maximumNumberOfAccounts: number;
+  };
+  cards: {
+    cost: number;
+    maxCardsPerAccount: number;
   };
   cash: {
     startAmount: number;
@@ -78,6 +85,7 @@ export interface ResourceConfig {
     enabled: boolean;
     bankZones: PolyZone[];
     type: string;
+    debug: boolean;
   };
   debug: {
     level: string;

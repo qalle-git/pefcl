@@ -44,6 +44,10 @@ const SharedSettings = ({ accountId, isAdmin }: Props) => {
     );
   }, [accountId]);
 
+  const handleUpdateAccounts = () => {
+    updateAccounts();
+  };
+
   useEffect(() => {
     handleUpdateUsers();
   }, [handleUpdateUsers]);
@@ -57,7 +61,7 @@ const SharedSettings = ({ accountId, isAdmin }: Props) => {
     };
 
     fetchNui(SharedAccountEvents.AddUser, payload)
-      .then(updateAccounts)
+      .then(handleUpdateAccounts)
       .then(handleUpdateUsers)
       .finally(() => setIsAddUserOpen(false));
   };
@@ -69,7 +73,7 @@ const SharedSettings = ({ accountId, isAdmin }: Props) => {
     };
 
     fetchNui(SharedAccountEvents.RemoveUser, payload)
-      .then(updateAccounts)
+      .then(handleUpdateAccounts)
       .then(handleUpdateUsers)
       .finally(() => setIsRemoveUserOpen(false));
   };
@@ -91,7 +95,7 @@ const SharedSettings = ({ accountId, isAdmin }: Props) => {
       />
 
       <Stack spacing={5} alignItems="flex-start">
-        <Stack spacing={1.5}>
+        <Stack spacing={1.5} sx={{ maxHeight: 250 }}>
           <Heading5>{t('Account users')}</Heading5>
           <TableContainer component={Paper}>
             <Table sx={{ minWidth: 400 }}>
@@ -109,7 +113,7 @@ const SharedSettings = ({ accountId, isAdmin }: Props) => {
                 {users.map((user) => (
                   <TableRow
                     hover
-                    key={user.user}
+                    key={user.userIdentifier}
                     sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                   >
                     {/* TODO: Add (You) to yourself. */}

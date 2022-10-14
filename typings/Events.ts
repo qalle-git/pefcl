@@ -8,19 +8,24 @@ export enum UserEvents {
   GetUsers = 'pefcl:userEventsGetUsers',
   Loaded = 'pefcl:userLoaded',
   Unloaded = 'pefcl:userUnloaded',
+  LoadClient = 'pefcl:loadClient',
 }
 
 export enum NUIEvents {
   Loaded = 'pefcl:nuiHasLoaded',
   Unloaded = 'pefcl:nuiHasUnloaded',
+  SetCardId = 'pefcl:nuiSetCardId',
+  SetCards = 'pefcl:nuiSetCards',
 }
 
 export enum AccountEvents {
+  GetAtmAccount = 'pefcl:getAtmAccount',
   GetAccounts = 'pefcl:getAccounts',
   CreateAccount = 'pefcl:createAccount',
   RenameAccount = 'pefcl:renameAccount',
   CreateAccountResponse = 'pefcl:createAccountResponse',
   SetDefaultAccount = 'pefcl:setDefaultAccount',
+  ChangedDefaultAccount = 'pefcl:changedDefaultAccount',
   DeleteAccount = 'pefcl:deleteAccount',
   DepositMoney = 'pefcl:depositMoney',
   WithdrawMoney = 'pefcl:withdrawMoney',
@@ -46,8 +51,11 @@ export enum Broadcasts {
   NewInvoice = 'pefcl:newInvoiceBroadcast',
   NewSharedUser = 'pefcl:newSharedUser',
   RemovedSharedUser = 'pefcl:removedSharedUser',
+  NewAccount = 'pefcl:newAccountBroadcast',
+  NewAccountBalance = 'pefcl:newAccountBalanceBroadcast',
   NewDefaultAccountBalance = 'pefcl:newDefaultAccountBalance',
   NewCashAmount = 'pefcl:newCashAmount',
+  NewCard = 'pefcl:newCardBroadcast',
 }
 
 export enum TransactionEvents {
@@ -73,4 +81,15 @@ export enum CashEvents {
 
 export enum BalanceEvents {
   UpdateCashBalance = 'pefcl:updateCashBalance',
+}
+
+export enum CardEvents {
+  Get = 'pefcl:getCards',
+  OrderShared = 'pefcl:orderSharedCard',
+  OrderPersonal = 'pefcl:orderPersonalCard',
+  Block = 'pefcl:blockCard',
+  Delete = 'pefcl:deleteCard',
+  UpdatePin = 'pefcl:updatePin',
+  NewCard = 'pefcl:newCard',
+  GetInventoryCards = 'pefcl:getInventoryCards',
 }

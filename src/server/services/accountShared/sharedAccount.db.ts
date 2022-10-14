@@ -28,14 +28,17 @@ export class SharedAccountDB {
     id: number,
     identifier: string,
     roles: AccountRole[],
+    transaction?: Transaction,
   ): Promise<AccountModel | null> {
     const sharedAccount = await SharedAccountModel.findOne({
       where: { accountId: id, userIdentifier: identifier },
       include,
+      transaction,
+      lock: Boolean(transaction),
     });
 
     const role = sharedAccount?.getDataValue('role');
-    if (role && !roles.includes(role)) {
+    if (role && !roles.includes(role) && role !== 'owner') {
       throw new ServerError(AuthorizationErrors.Forbidden);
     }
 

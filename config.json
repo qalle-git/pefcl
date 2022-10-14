@@ -6,7 +6,9 @@
   },
   "frameworkIntegration": {
     "enabled": false,
-    "resource": "your-resource"
+    "resource": "your-resource",
+    "syncInitialBankBalance": true,
+    "isCardsEnabled": false
   },
   "database": {
     "profileQueries": true
@@ -18,9 +20,14 @@
     "startAmount": 2000
   },
   "accounts": {
-    "startAmount": 500,
+    "firstAccountStartBalance": 2500,
+    "otherAccountStartBalance": 500,
     "clearingNumber": 920,
     "maximumNumberOfAccounts": 3
+  },
+  "cards": {
+    "cost": 4500,
+    "maxCardsPerAccount": 2
   },
   "atms": {
     "distance": 5.0,
@@ -80,6 +87,7 @@
   },
   "target": {
     "type": "qtarget",
+    "debug": false,
     "enabled": true,
     "bankZones": [
       {

@@ -14,6 +14,7 @@ import {
   SharedAccountUser,
   AddToUniqueAccountInput,
   RemoveFromUniqueAccountInput,
+  UpdateBankBalanceByNumberInput,
 } from '@typings/Account';
 import {
   AccountEvents,
@@ -124,11 +125,7 @@ export class AccountController {
   @Export(ServerExports.WithdrawCash)
   @NetPromise(AccountEvents.WithdrawMoney)
   async withdrawMoney(req: Request<ATMInput>, res: Response<any>) {
-    const accountId = req.data.accountId;
-
     try {
-      accountId &&
-        (await this._auth.isAuthorizedAccount(accountId, req.source, [AccountRole.Admin]));
       await this._accountService.handleWithdrawMoney(req);
       res({ status: 'ok', data: {} });
     } catch (err) {
@@ -262,10 +259,33 @@ export class AccountController {
     }
   }
 
+  @Export(ServerExports.GetBankBalanceByIdentifier)
+  async getBankBalanceByIdentifier(req: Request<string>, res: Response<unknown>) {
+    try {
+      const data = await this._accountService.getBankBalanceByIdentifier(req.data);
+      res({ status: 'ok', data });
+    } catch (err) {
+      res({ status: 'error', errorMsg: err.message });
+    }
+  }
+
   @Export(ServerExports.AddBankBalanceByIdentifier)
   async addBankBalanceByIdentifier(req: Request<UpdateBankBalanceInput>, res: Response<unknown>) {
     try {
       await this._accountService.addMoneyByIdentifier(req);
+      res({ status: 'ok', data: {} });
+    } catch (err) {
+      res({ status: 'error', errorMsg: err.message });
+    }
+  }
+
+  @Export(ServerExports.AddBankBalanceByNumber)
+  async addBankBalanceByNumber(
+    req: Request<UpdateBankBalanceByNumberInput>,
+    res: Response<unknown>,
+  ) {
+    try {
+      await this._accountService.addMoneyByNumber(req);
       res({ status: 'ok', data: {} });
     } catch (err) {
       res({ status: 'error', errorMsg: err.message });
@@ -292,6 +312,19 @@ export class AccountController {
   ) {
     try {
       await this._accountService.removeMoney(req);
+      res({ status: 'ok', data: {} });
+    } catch (err) {
+      res({ status: 'error', errorMsg: err.message });
+    }
+  }
+
+  @Export(ServerExports.RemoveBankBalanceByNumber)
+  async removeBankBalanceByNumber(
+    req: Request<{ amount: number; message: string; accountNumber: string }>,
+    res: Response<unknown>,
+  ) {
+    try {
+      this._accountService.removeMoneyByAccountNumber(req);
       res({ status: 'ok', data: {} });
     } catch (err) {
       res({ status: 'error', errorMsg: err.message });

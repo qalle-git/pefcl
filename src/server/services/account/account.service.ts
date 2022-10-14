@@ -15,6 +15,7 @@ import {
   CreateBasicAccountInput,
   AddToUniqueAccountInput,
   RemoveFromUniqueAccountInput,
+  UpdateBankBalanceByNumberInput,
 } from '@typings/Account';
 import { UserService } from '../user/user.service';
 import { config } from '@utils/server-config';
@@ -30,16 +31,28 @@ import {
   AccountErrors,
   AuthorizationErrors,
   BalanceErrors,
+  CardErrors,
   GenericErrors,
   UserErrors,
 } from '@typings/Errors';
 import { SharedAccountDB } from '@services/accountShared/sharedAccount.db';
 import { AccountEvents, Broadcasts } from '@server/../../typings/Events';
+import { getFrameworkExports } from '@server/utils/frameworkIntegration';
+import { Transaction } from 'sequelize/types';
+import { CardDB } from '../card/card.db';
 
 const logger = mainLogger.child({ module: 'accounts' });
+const {
+  enabled = false,
+  syncInitialBankBalance = false,
+  isCardsEnabled = false,
+} = config.frameworkIntegration ?? {};
+const { firstAccountStartBalance } = config.accounts ?? {};
+const isFrameworkIntegrationEnabled = enabled;
 
 @singleton()
 export class AccountService {
+  _cardDB: CardDB;
   _accountDB: AccountDB;
   _sharedAccountDB: SharedAccountDB;
   _cashService: CashService;
@@ -52,7 +65,9 @@ export class AccountService {
     userService: UserService,
     cashService: CashService,
     transactionService: TransactionService,
+    cardDB: CardDB,
   ) {
+    this._cardDB = cardDB;
     this._accountDB = accountDB;
     this._sharedAccountDB = sharedAccountDB;
     this._cashService = cashService;
@@ -77,7 +92,7 @@ export class AccountService {
 
       /* Override role by the shared one. */
       return {
-        ...acc.toJSON(),
+        ...acc?.toJSON(),
         role: sharedAcc.role,
       };
     });
@@ -112,9 +127,9 @@ export class AccountService {
     return account?.toJSON();
   }
 
-  async getDefaultAccountBySource(source: number) {
+  async getDefaultAccountBySource(source: number, t?: Transaction) {
     const user = this._userService.getUser(source);
-    return await this._accountDB.getDefaultAccountByIdentifier(user.getIdentifier());
+    return await this._accountDB.getDefaultAccountByIdentifier(user.getIdentifier(), t);
   }
 
   async getDefaultAccountBalance(req: Request<number>) {
@@ -211,12 +226,24 @@ export class AccountService {
       return defaultAccount.toJSON();
     }
 
-    logger.debug('Creating initial account ...');
+    let balance = firstAccountStartBalance;
+    if (isFrameworkIntegrationEnabled && syncInitialBankBalance) {
+      logger.info('Syncing initial bank balance from framework.');
+
+      const exports = getFrameworkExports();
+      balance = exports.getBank(source);
+
+      logger.info('Moving bank balance from export to initial account.');
+      logger.info({ identifier, balance });
+    }
+
+    logger.debug('Creating initial account .. ');
     const initialAccount = await this._accountDB.createAccount({
       isDefault: true,
       accountName: i18next.t('Personal account'),
       ownerIdentifier: user.getIdentifier(),
       type: AccountType.Personal,
+      balance,
     });
 
     logger.debug('Successfully created initial account.');
@@ -329,6 +356,7 @@ export class AccountService {
       const deletingAccount = await this._accountDB.getAuthorizedAccountById(
         accountId,
         user.getIdentifier(),
+        t,
       );
 
       // TODO: Implement smarter way of doing this check. Generally you can't access other players accounts.
@@ -440,25 +468,39 @@ export class AccountService {
   }
 
   async handleWithdrawMoney(req: Request<ATMInput>) {
-    logger.silly(`"${req.source}" withdrawing "${req.data.amount}".`);
-    const amount = req.data.amount;
+    const { accountId, amount, cardId, cardPin } = req.data;
+    logger.silly(`"${req.source}" withdrawing "${amount}".`);
 
     if (amount <= 0) {
       throw new ServerError(GenericErrors.BadInput);
     }
 
-    /* Only run the export when account is the default(?). Not sure about this. */
     const t = await sequelize.transaction();
     try {
-      const targetAccount = req.data.accountId
-        ? await this._accountDB.getAccountById(req.data.accountId)
+      /* If framework is enabled, do a card check, otherwise continue. */
+      if (isFrameworkIntegrationEnabled && isCardsEnabled && cardId) {
+        const exports = getFrameworkExports();
+        const cards = exports.getCards(req.source);
+        const selectedCard = cards?.find((card) => card.id === cardId);
+
+        if (!selectedCard) {
+          throw new Error('User does not have selected card in inventory.');
+        }
+
+        const card = await this._cardDB.getById(selectedCard.id);
+        if (card?.getDataValue('pin') !== cardPin) {
+          throw new Error(CardErrors.InvalidPin);
+        }
+      }
+
+      const targetAccount = accountId
+        ? await this._accountDB.getAccountById(accountId)
         : await this.getDefaultAccountBySource(req.source);
 
       if (!targetAccount) {
         throw new ServerError(GenericErrors.NotFound);
       }
 
-      const accountId = targetAccount.getDataValue('id') ?? 0;
       const currentAccountBalance = targetAccount.getDataValue('balance');
 
       if (currentAccountBalance < amount) {
@@ -517,8 +559,12 @@ export class AccountService {
         throw new Error('This is already the default account');
       }
 
-      await defaultAccount?.update({ isDefault: false });
-      await newDefaultAccount.update({ isDefault: true });
+      await defaultAccount?.update({ isDefault: false }, { transaction: t });
+      await newDefaultAccount.update({ isDefault: true }, { transaction: t });
+
+      t.afterCommit(() => {
+        emit(AccountEvents.ChangedDefaultAccount, newDefaultAccount.toJSON());
+      });
 
       t.commit();
       return newDefaultAccount;
@@ -625,6 +671,37 @@ export class AccountService {
     }
   }
 
+  async addMoneyByNumber(req: Request<UpdateBankBalanceByNumberInput>) {
+    const { amount, accountNumber, message } = req.data;
+    logger.silly(`Adding money by account number to ${accountNumber} ..`);
+    if (amount <= 0) {
+      throw new ServerError(GenericErrors.BadInput);
+    }
+
+    const t = await sequelize.transaction();
+    try {
+      const account = await this._accountDB.getAccountByNumber(accountNumber ?? '');
+
+      if (!account) {
+        throw new ServerError(GenericErrors.NotFound);
+      }
+
+      await this._accountDB.increment(account, amount, t);
+      await this._transactionService.handleCreateTransaction(
+        {
+          amount,
+          message,
+          fromAccount: account?.toJSON(),
+          type: TransactionType.Incoming,
+        },
+        t,
+      );
+      t.commit();
+    } catch (err) {
+      t.rollback();
+    }
+  }
+
   async removeMoney(req: Request<UpdateBankBalanceInput>) {
     const { amount, message } = req.data;
     logger.silly(`Removing ${amount} money from ${req.source}...`);
@@ -695,6 +772,39 @@ export class AccountService {
     }
   }
 
+  async removeMoneyByAccountNumber(req: Request<UpdateBankBalanceByNumberInput>) {
+    const { amount, accountNumber, message } = req.data;
+    logger.silly(
+      `Removing ${req.data.amount} money by account number from ${req.data.accountNumber} ..`,
+    );
+
+    if (amount <= 0) {
+      throw new ServerError(GenericErrors.BadInput);
+    }
+
+    const t = await sequelize.transaction();
+    try {
+      const account = await this._accountDB.getAccountByNumber(accountNumber ?? '');
+      if (!account) {
+        throw new ServerError(GenericErrors.NotFound);
+      }
+
+      await this._accountDB.decrement(account, amount, t);
+      await this._transactionService.handleCreateTransaction(
+        {
+          amount,
+          message,
+          fromAccount: account?.toJSON(),
+          type: TransactionType.Outgoing,
+        },
+        t,
+      );
+      t.commit();
+    } catch {
+      t.rollback();
+    }
+  }
+
   async setMoney(req: Request<{ amount: number }>) {
     const { amount } = req.data;
     logger.silly(`Setting money to ${amount} for ${req.source} ..`);
@@ -728,7 +838,6 @@ export class AccountService {
       type,
       accountName: name,
       ownerIdentifier: identifier,
-      isDefault: true,
     });
 
     const json = account.toJSON();
@@ -850,5 +959,13 @@ export class AccountService {
       t.rollback();
       logger.error('Failed to add user to unique account');
     }
+  }
+
+  async getBankBalanceByIdentifier(identifier: string) {
+    const account = await this._accountDB.getDefaultAccountByIdentifier(identifier ?? '');
+    if (!account) {
+      throw new ServerError(GenericErrors.NotFound);
+    }
+    return account.getDataValue('balance');
   }
 }

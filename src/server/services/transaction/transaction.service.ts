@@ -54,12 +54,18 @@ export class TransactionService {
 
     const user = this._userService.getUser(req.source);
     const accounts = await this._accountDB.getAccountsByIdentifier(user.getIdentifier());
+    const sharedAccounts = await this._sharedAccountDB.getSharedAccountsByIdentifier(
+      user.getIdentifier(),
+    );
 
+    const sharedAccountIds = sharedAccounts.map(
+      (account) => account.getDataValue('accountId') ?? 0,
+    );
     const accountIds = accounts.map((account) => account.getDataValue('id') ?? 0);
 
     const transactions = await this._transactionDB.getTransactionFromAccounts({
       ...req.data,
-      accountIds,
+      accountIds: [...sharedAccountIds, ...accountIds],
     });
 
     const total = await this._transactionDB.getTotalTransactionsFromAccounts(accountIds);
@@ -98,11 +104,16 @@ export class TransactionService {
 
     const t = await sequelize.transaction();
     try {
-      const myAccount = await this._accountDB.getAuthorizedAccountById(fromAccountId, identifier);
+      const myAccount = await this._accountDB.getAuthorizedAccountById(
+        fromAccountId,
+        identifier,
+        t,
+      );
       const sharedAccount = await this._sharedAccountDB.getAuthorizedSharedAccountById(
         fromAccountId,
         identifier,
-        [AccountRole.Admin, AccountRole.Owner],
+        [AccountRole.Admin],
+        t,
       );
 
       const fromAccount = myAccount ?? sharedAccount;
@@ -146,9 +157,10 @@ export class TransactionService {
 
     const t = await sequelize.transaction();
     try {
-      const fromAccount = await this._accountDB.getAccountById(req.data.fromAccountId);
+      const fromAccount = await this._accountDB.getAccountById(req.data.fromAccountId, t);
       const toAccount = await this._externalAccountService.getAccountFromExternalAccount(
         req.data.toAccountId,
+        t,
       );
 
       if (!toAccount || !fromAccount) {

@@ -3,9 +3,8 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import { config } from '@utils/server-config';
 import { Account, AccountRole, AccountType } from '@typings/Account';
 import { sequelize } from '@utils/pool';
-import { generateAccountNumber } from '@utils/misc';
+import { generateClearingNumber } from '@utils/misc';
 import { timestamps } from '../timestamps.model';
-import { regexAlphaNumeric } from '@shared/utils/regexes';
 import { AccountEvents } from '@server/../../typings/Events';
 
 export class AccountModel extends Model<
@@ -23,12 +22,11 @@ AccountModel.init(
     number: {
       type: DataTypes.STRING,
       unique: true,
-      defaultValue: generateAccountNumber,
+      defaultValue: generateClearingNumber,
     },
     accountName: {
       type: DataTypes.STRING,
       validate: {
-        is: regexAlphaNumeric,
         max: 25,
         min: 1,
       },
@@ -46,7 +44,7 @@ AccountModel.init(
     },
     balance: {
       type: DataTypes.INTEGER,
-      defaultValue: config?.accounts?.startAmount ?? 0,
+      defaultValue: config?.accounts?.otherAccountStartBalance ?? 0,
     },
     type: {
       type: DataTypes.STRING,
