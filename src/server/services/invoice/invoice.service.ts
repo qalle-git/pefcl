@@ -121,6 +121,16 @@ export class InvoiceService {
       });
       await this._invoiceDB.payInvoice(req.data.invoiceId);
 
+      if (toAccountIdentifier && toAccountIdentifier.length > 0) {
+        emit('pefcl:invoicePaid', {
+          invoiceId: req.data.invoiceId,
+          amount,
+          fromCharacterId: toAccountIdentifier,
+          toCharacterId: invoice?.getDataValue('toIdentifier'),
+          job: receiverAccountIdentifier,
+        });
+      }
+
       await this.transactionService.handleCreateTransaction(
         {
           amount: amount,
