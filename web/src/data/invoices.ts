@@ -8,7 +8,7 @@ import { isEnvBrowser } from '../utils/misc';
 const initialState: GetInvoicesResponse = {
   total: 0,
   offset: 0,
-  limit: 10,
+  limit: 40,
   totalUnpaid: 0,
   invoices: [],
 };

@@ -144,12 +144,6 @@ const Accounts = () => {
                 </Button>
                 {!isAdmin && <HelperText>{t('Admin role required')}</HelperText>}
               </Stack>
-
-              <Stack spacing={0.75}>
-                <Button onClick={() => copy(selectedAccount?.number ?? '')}>
-                  {t('Copy account number')}
-                </Button>
-              </Stack>
             </Stack>
           </Stack>
 

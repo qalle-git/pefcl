@@ -44,7 +44,7 @@ const MobileDashboardView = () => {
 
         <Stack spacing={1}>
           <Heading4>{t('Default account')}</Heading4>
-          {defaultAccount && <AccountCard account={defaultAccount} />}
+          {defaultAccount && <AccountCard mobileApp account={defaultAccount} />}
         </Stack>
 
         <Heading4>{t('Latest transactions')}</Heading4>

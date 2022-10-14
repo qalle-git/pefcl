@@ -19,7 +19,7 @@ const MobileAccountsView = () => {
 
         <Stack spacing={2}>
           {accounts.map((account) => {
-            return <AccountCard account={account} key={account.id} />;
+            return <AccountCard mobileApp account={account} key={account.id} />;
           })}
         </Stack>
 
