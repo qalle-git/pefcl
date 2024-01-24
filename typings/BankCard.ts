@@ -5,6 +5,8 @@ export interface Card {
   id: number;
   account?: Account;
   accountId?: number;
+  accountIdentifier?: string;
+  accountName?: string;
 
   pin: number;
   isBlocked: boolean;

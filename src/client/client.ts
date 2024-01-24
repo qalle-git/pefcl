@@ -82,6 +82,10 @@ RegisterNuiCB<void>(GeneralEvents.CloseUI, async () => {
   emit('pefcl:closedUI');
 });
 
+RegisterNuiCB<{ keepGameFocus: boolean }>('npwd:toggleAllControls', async (data) => {
+  emit('npwd:gameFocus', data.keepGameFocus);
+});
+
 if (!useFrameworkIntegration) {
   RegisterCommand(
     'cash',

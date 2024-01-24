@@ -66,6 +66,12 @@ export class CardService {
     return cards.map((card) => card.toJSON());
   }
 
+  async getCardById(req: Request<{ cardId: number }>) {
+    const card = await this.cardDB.getById(req.data.cardId);
+
+    return card?.toJSON();
+  }
+
   async getInventoryCards(req: Request): Promise<InventoryCard[]> {
     this.validateCardsConfig();
 
@@ -234,7 +240,7 @@ export class CardService {
 
     const t = await sequelize.transaction();
     try {
-      const account = await this.accountService.getAuthorizedAccount(req.source, accountId);
+      const account = await this.accountDB.getAccountById(accountId);
       const paymentAccount = await this.accountService.getAuthorizedAccount(
         req.source,
         paymentAccountId,
@@ -272,7 +278,11 @@ export class CardService {
         emit(CardEvents.NewCard, { ...card.toJSON() });
       });
 
-      this.giveCard(req.source, card.toJSON());
+      this.giveCard(req.source, {
+        ...card.toJSON(),
+        accountIdentifier: account.getDataValue('ownerIdentifier'),
+        accountName: account.getDataValue('accountName'),
+      });
 
       t.commit();
       logger.silly('Ordered new card.');

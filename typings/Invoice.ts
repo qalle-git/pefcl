@@ -44,6 +44,7 @@ export interface Invoice {
 export interface PayInvoiceInput {
   invoiceId: number;
   fromAccountId: number;
+  multi?: number;
 }
 
 export interface GetInvoicesInput {
@@ -55,4 +56,5 @@ export interface GetInvoicesResponse extends GetInvoicesInput {
   total: number;
   totalUnpaid: number;
   invoices: Invoice[];
+  unpaidInvoices: Invoice[];
 }

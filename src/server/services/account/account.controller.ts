@@ -50,6 +50,12 @@ export class AccountController {
     this._externalAccountService = externalAccountService;
   }
 
+  @Export('getAccountById')
+  async getAccountById(req: Request<{ accountId: number }>, res: Response<Account>) {
+    const account = await this._accountService.getAccountById(req.data.accountId);
+    res({ status: 'ok', data: account.toJSON() });
+  }
+
   @Export(ServerExports.GetAccounts)
   @NetPromise(AccountEvents.GetAccounts)
   async getAccounts(req: Request<void>, res: Response<Account[]>) {

@@ -20,6 +20,12 @@ export class InvoiceDB {
     return await InvoiceModel.count({ where: { toIdentifier: identifier } });
   }
 
+  async getAllUnpaidInvoices(identifier: string): Promise<InvoiceModel[]> {
+    return await InvoiceModel.findAll({
+      where: { toIdentifier: identifier, status: InvoiceStatus.PENDING },
+    });
+  }
+
   async getUnpaidInvoicesCount(identifier: string): Promise<number> {
     return await InvoiceModel.count({
       where: { toIdentifier: identifier, status: InvoiceStatus.PENDING },

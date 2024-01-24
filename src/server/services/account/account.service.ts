@@ -968,4 +968,14 @@ export class AccountService {
     }
     return account.getDataValue('balance');
   }
+
+  async getAccountById(accountId: number) {
+    const account = await this._accountDB.getAccountById(accountId);
+
+    if (!account) {
+      throw new ServerError(GenericErrors.NotFound);
+    }
+
+    return account;
+  }
 }

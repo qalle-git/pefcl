@@ -124,13 +124,13 @@ const CardActions = ({ cardId, onBlock, onDelete, isBlocked }: CardActionsProps)
 
           <Stack spacing={1} marginTop={2}>
             <Button onClick={() => setDialog('update')}>{t('Update pin')}</Button>
-            <Button color="error" onClick={() => setDialog('block')}>
+            <Button color="error" onClick={() => setDialog('block')} disabled={isBlocked}>
               {t('Block the card')}
             </Button>
 
             <Button
               color="error"
-              onClick={() => !isBlocked && setDialog('delete')}
+              onClick={() => isBlocked && setDialog('delete')}
               disabled={isLoading || !isBlocked}
             >
               {t('Delete the card')}

@@ -18,6 +18,12 @@ import { useAtom } from 'jotai';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+export const toggleKeys = (keepGameFocus: boolean) => {
+  fetchNui('npwd:toggleAllControls', {
+    keepGameFocus,
+  });
+};
+
 const MobileTransferView = () => {
   const { t } = useTranslation();
   const { general } = useConfig();
@@ -114,7 +120,16 @@ const MobileTransferView = () => {
 
         <Stack spacing={1}>
           <Heading5>{t('Amount')}</Heading5>
-          <PriceField value={amount} onChange={(event) => setAmount(event.target.value)} />
+          <PriceField
+            value={amount}
+            onFocus={() => {
+              toggleKeys(false);
+            }}
+            onBlur={() => {
+              toggleKeys(true);
+            }}
+            onChange={(event) => setAmount(event.target.value)}
+          />
           <NewBalance amount={newBalance} isValid={isValidNewBalance} />
         </Stack>
 

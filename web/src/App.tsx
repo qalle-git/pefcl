@@ -10,7 +10,7 @@ import { Route } from 'react-router-dom';
 import './App.css';
 import { useConfig } from './hooks/useConfig';
 import theme from './utils/theme';
-import AccountsView from './views/Accounts/AccountsView';
+import AccountsView from './views/accounts/AccountsView';
 import Dashboard from './views/dashboard/Dashboard';
 import Invoices from './views/Invoices/Invoices';
 import ATM from './views/ATM/ATM';
@@ -111,7 +111,7 @@ const App: React.FC = () => {
     <>
       {process.env.NODE_ENV === 'development' && <Devbar />}
 
-      <React.Suspense fallback={'Loading bank'}>
+      <React.Suspense fallback={'Laddar bank...'}>
         {!isAtmVisible && isVisible && (
           <Container>
             <Content>

@@ -31,6 +31,7 @@ export class InvoiceController {
   @NetPromise(InvoiceEvents.Get)
   async getInvoices(req: Request<GetInvoicesInput>, res: Response<GetInvoicesResponse>) {
     const data = await this._InvoiceService.getAllInvoicesBySource(req);
+
     return res({
       status: 'ok',
       data: {

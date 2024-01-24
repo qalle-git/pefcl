@@ -8,9 +8,10 @@ import { isEnvBrowser } from '../utils/misc';
 const initialState: GetInvoicesResponse = {
   total: 0,
   offset: 0,
-  limit: 40,
+  limit: 10,
   totalUnpaid: 0,
   invoices: [],
+  unpaidInvoices: [],
 };
 
 const getInvoices = async (input: GetInvoicesInput): Promise<GetInvoicesResponse> => {
@@ -42,7 +43,7 @@ export const invoicesAtom = atom(
 );
 
 export const unpaidInvoicesAtom = atom((get) => {
-  return get(invoicesAtom).invoices.filter((invoice) => invoice.status === InvoiceStatus.PENDING);
+  return get(invoicesAtom).unpaidInvoices;
 });
 
 export const totalInvoicesAtom = atom((get) => get(invoicesAtom).total);

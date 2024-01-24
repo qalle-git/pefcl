@@ -1,14 +1,14 @@
 {
   "general": {
     "language": "sv",
-    "currency": "USD",
+    "currency": "SEK",
     "identifierType": "license"
   },
   "frameworkIntegration": {
     "enabled": false,
     "resource": "your-resource",
-    "syncInitialBankBalance": true,
-    "isCardsEnabled": false
+    "syncInitialBankBalance": false,
+    "isCardsEnabled": true
   },
   "database": {
     "profileQueries": true
@@ -27,7 +27,7 @@
   },
   "cards": {
     "cost": 4500,
-    "maxCardsPerAccount": 2
+    "maxCardsPerAccount": 5
   },
   "atms": {
     "distance": 5.0,
@@ -88,7 +88,7 @@
   "target": {
     "type": "qtarget",
     "debug": false,
-    "enabled": true,
+    "enabled": false,
     "bankZones": [
       {
         "position": {

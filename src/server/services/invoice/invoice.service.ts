@@ -54,6 +54,7 @@ export class InvoiceService {
     logger.silly('Fetching user invoices ..');
     const user = this._userService.getUser(req.source);
     const invoices = await this._invoiceDB.getAllReceivingInvoices(user.getIdentifier(), req.data);
+    const unpaidInvoices = await this._invoiceDB.getAllUnpaidInvoices(user.getIdentifier());
     const total = await this.countTotalInvoices(req.source);
     const totalUnpaid = await this.countUnpaidInvoices(req.source);
 
@@ -61,6 +62,7 @@ export class InvoiceService {
       total,
       totalUnpaid: totalUnpaid,
       invoices: invoices.map((invoice) => invoice.toJSON()),
+      unpaidInvoices: unpaidInvoices.map((invoice) => invoice.toJSON()),
     };
   }
 
@@ -106,11 +108,11 @@ export class InvoiceService {
       }
 
       const accountBalance = fromAccount.getDataValue('balance');
-      const amount = invoice.getDataValue('amount');
+      const amount = Math.floor(invoice.getDataValue('amount') * (req.data.multi ?? 1.0));
 
-      if (accountBalance < amount) {
-        throw new Error(BalanceErrors.InsufficentFunds);
-      }
+      // if (accountBalance < amount) {
+      //   throw new Error(BalanceErrors.InsufficentFunds);
+      // }
 
       /* TODO: Implement transaction fee if wanted */
       await this._accountDB.transfer({

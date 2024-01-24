@@ -9,6 +9,8 @@ import {
   InventoryCard,
   UpdateCardPinInput,
 } from '@server/../../typings/BankCard';
+import { ServerExports } from '@server/../../typings/exports/server';
+import { Export, ExportListener } from '@server/decorators/Export';
 import { AccountEvents, CardEvents } from '@typings/Events';
 import { Request, Response } from '@typings/http';
 import { Controller } from '../../decorators/Controller';
@@ -16,6 +18,7 @@ import { EventListener } from '../../decorators/Event';
 import { CardService } from './card.service';
 
 @Controller('Card')
+@ExportListener()
 @EventListener()
 @PromiseEventListener()
 export class CardController {
@@ -57,7 +60,7 @@ export class CardController {
   @NetPromise(CardEvents.Delete)
   async deleteCard(req: Request<DeleteCardInput>, res: Response<boolean>) {
     try {
-      const isDeleted = await this.cardService.blockCard(req);
+      const isDeleted = await this.cardService.deleteCard(req);
       res({ status: 'ok', data: isDeleted });
     } catch (error) {
       res({ status: 'error', errorMsg: error.message });
@@ -86,9 +89,20 @@ export class CardController {
 
   /* Return cards from player inventory to be selected at ATM */
   @NetPromise(CardEvents.GetInventoryCards)
+  @Export(ServerExports.GetInventoryCards)
   async getInventoryCards(req: Request, res: Response<InventoryCard[]>) {
     try {
       const result = await this.cardService.getInventoryCards(req);
+      res({ status: 'ok', data: result });
+    } catch (error) {
+      res({ status: 'error', errorMsg: error.message });
+    }
+  }
+
+  @Export('getCardById')
+  async getCardById(req: Request, res: Response<Card>) {
+    try {
+      const result = await this.cardService.getCardById(req);
       res({ status: 'ok', data: result });
     } catch (error) {
       res({ status: 'error', errorMsg: error.message });
