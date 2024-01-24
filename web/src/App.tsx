@@ -4,7 +4,6 @@ import dayjs from 'dayjs';
 import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/sv';
 import React, { useEffect, useState } from 'react';
-import { useNuiEvent } from 'react-fivem-hooks';
 import { useTranslation } from 'react-i18next';
 import { Route } from 'react-router-dom';
 import './App.css';
@@ -26,6 +25,7 @@ import { useSetAtom } from 'jotai';
 import { accountsAtom, rawAccountAtom } from '@data/accounts';
 import { transactionBaseAtom, transactionInitialState } from '@data/transactions';
 import CardsView from './views/Cards/CardsView';
+import { useNuiEvent } from '@hooks/useNuiEvent';
 
 dayjs.extend(updateLocale);
 
@@ -54,26 +54,11 @@ const App: React.FC = () => {
   const setAccounts = useSetAtom(accountsAtom);
   const setTransactions = useSetAtom(transactionBaseAtom);
   const [hasLoaded, setHasLoaded] = useState(process.env.NODE_ENV === 'development');
+  const [isAtmVisible, setIsAtmVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
 
-  useNuiEvent({
-    event: UserEvents.Loaded,
-    callback: () => {
-      console.debug('Loaded user.');
-      setHasLoaded(true);
-    },
-  });
-
-  useNuiEvent({
-    event: UserEvents.Unloaded,
-    callback: () => {
-      console.debug('Unloaded user.');
-      fetchNui(GeneralEvents.CloseUI);
-      setHasLoaded(false);
-      setRawAccounts([]);
-      setAccounts([]);
-      setTransactions(transactionInitialState);
-    },
-  });
+  useNuiEvent('PEFCL', UserEvents.Loaded, () => setHasLoaded(true));
+  useNuiEvent('PEFCL', UserEvents.Unloaded, () => setHasLoaded(false));
 
   useEffect(() => {
     fetchNui(NUIEvents.Loaded);
@@ -82,15 +67,8 @@ const App: React.FC = () => {
     };
   }, []);
 
-  const { data: isVisible } = useNuiEvent<boolean>({
-    event: 'setVisible',
-    defaultValue: false,
-  });
-
-  const { data: isAtmVisible } = useNuiEvent<boolean>({
-    event: 'setVisibleATM',
-    defaultValue: false,
-  });
+  useNuiEvent('PEFCL', 'setVisible', (data) => setIsVisible(data));
+  useNuiEvent('PEFCL', 'setVisibleATM', (data) => setIsAtmVisible(data));
 
   const { i18n } = useTranslation();
   useExitListener(isVisible);

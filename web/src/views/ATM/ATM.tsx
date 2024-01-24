@@ -13,7 +13,6 @@ import { AnimatePresence } from 'framer-motion';
 import React, { FormEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { useNuiEvent } from 'react-fivem-hooks';
 import { PIN_CODE_LENGTH } from '@shared/constants';
 import PinField from '@components/ui/Fields/PinField';
 import { CardErrors } from '@typings/Errors';
@@ -24,6 +23,7 @@ import { useKeyDown } from '@hooks/useKeyPress';
 import { useExitListener } from '@hooks/useExitListener';
 import { useAtomValue } from 'jotai';
 import { defaultAccountAtom } from '@data/accounts';
+import { useNuiEvent } from '@hooks/useNuiEvent';
 
 const AnimationContainer = styled.div`
   position: absolute;
@@ -131,11 +131,7 @@ const ATM = () => {
     isCardsEnabled && isOpen && updateCards();
   }, [t, isCardsEnabled, isOpen]);
 
-  useNuiEvent<boolean>({
-    event: 'setVisibleATM',
-    defaultValue: false,
-    callback: handleVisibility,
-  });
+  useNuiEvent('PEFCL', 'setVisibleATM', (data) => setIsOpen(data));
 
   const input = {
     cardId: selectedCard?.id ?? 0,
